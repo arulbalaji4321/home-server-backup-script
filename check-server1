@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Define server IP, port, and SSH key path for selfhost-1
+SERVER_IP="192.168.29.251"
+SERVER_PORT="2222"
+SERVER_NAME="selfhost-1 server VM"
+SSH_KEY_PATH="/home/arul/.ssh/id_ed25519"  # Add your SSH key path here
+
+echo "[-] Shutting down $SERVER_NAME"
+ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no -p "$SERVER_PORT" root@"$SERVER_IP" "poweroff"
+
+# Wait for 10 seconds to give the server time to power off
+echo "[*] Waiting for the server to shut down..."
+sleep 10
+
+# Check if the server is off by attempting to SSH and expecting failure
+echo "[*] Verifying server shutdown..."
+SERVER_OFF=false
+MAX_RETRIES=5
+for i in $(seq 1 "$MAX_RETRIES"); do
+    # Try to SSH into the server
+    ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no -p "$SERVER_PORT" -o ConnectTimeout=5 root@"$SERVER_IP" "exit" 2>/dev/null
+    
+    # Check if the SSH command failed, indicating the server is off
+    if [ $? -ne 0 ]; then
+        echo "[+] $SERVER_NAME is powered off."
+        SERVER_OFF=true
+        break
+    else
+        echo "[*] Server is still shutting down. Checking again in 5 seconds..."
+        sleep 5
+    fi
+done
+
+# Final check to ensure no warning message if the server is off
+if [ "$SERVER_OFF" = false ]; then
+    echo "[!] Warning: $SERVER_NAME did not shut down as expected."
+else
+    echo "[+] Proceeding with the rest of the script."
+fi
+
+
