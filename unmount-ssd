@@ -1,0 +1,18 @@
+
+#!/bin/bash
+
+MOUNT_POINT="/mnt/my-drive"
+
+echo "🔄 Checking if $MOUNT_POINT is mounted..."
+if mountpoint -q "$MOUNT_POINT"; then
+    echo "⚡ Unmounting $MOUNT_POINT..."
+    sudo umount "$MOUNT_POINT" && echo "✅ Unmounted successfully!" || { echo "❌ Failed to unmount."; exit 1; }
+else
+    echo "⚠ No drive mounted at $MOUNT_POINT"
+    exit 0
+fi
+
+# Display cool ASCII art
+echo "🚀 Drive Unmounted!"
+figlet "USB Ejected!"
+

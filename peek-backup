@@ -1,0 +1,21 @@
+#!/bin/bash
+
+MOUNT_POINT="/mnt/my-drive"
+DEVICE="/dev/sdb1"  # Updated to the correct partition
+
+echo "🔄 Checking if $DEVICE is already mounted..."
+if mountpoint -q "$MOUNT_POINT"; then
+    echo "⚠ Already mounted at $MOUNT_POINT. Unmounting..."
+    sudo umount "$MOUNT_POINT" || { echo "❌ Failed to unmount. Exiting."; exit 1; }
+fi
+
+echo "⚡ Mounting $DEVICE to $MOUNT_POINT..."
+sudo mkdir -p "$MOUNT_POINT"
+sudo mount "$DEVICE" "$MOUNT_POINT" && echo "✅ Mounted successfully!" || { echo "❌ Failed to mount."; exit 1; }
+
+echo "📂 Scanning disk usage with ncdu..."
+ncdu "$MOUNT_POINT"
+
+echo "🗂 Opening Ranger..."
+ranger "$MOUNT_POINT"
+

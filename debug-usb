@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "🔄 Debugging USB issue..."
+
+# Check who is using the usb_storage module
+echo "⚡ Checking what is holding usb_storage..."
+sudo lsmod | grep usb_storage
+sudo lsof | grep usb-storage
+sudo fuser -v /dev/sd*
+
+echo "🔄 Checking USB devices..."
+lsusb
+
+echo "🔄 Checking kernel logs for USB errors..."
+dmesg | tail -30
+
+

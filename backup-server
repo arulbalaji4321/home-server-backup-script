@@ -1,104 +1,114 @@
 #!/bin/bash
 
+# Log file
+LOG_FILE="./backup.log"
+
+# Function to log messages
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
 # Check if the script is run with sudo
 if [ "$EUID" -ne 0 ]; then
-    echo "Please run this script with sudo."
+    log_message "Please run this script with sudo."
     exit 1
 fi
 
-# Check whether server VMs are in shutdown state if not..shutdown the VMs
+# Run enable-usb script to prepare USB
+log_message "Running enable-usb script..."
+./enable-usb
 
+# Check whether server VMs are in shutdown state, if not, shutdown the VMs
+log_message "Checking server states..."
 ./check-server1
 ./check-server2
+./check-server3
 
 # Define source directories using the explicit path to your home directory
 VM_DIR_MY_PLATFORMS="/home/arul/my_platforms/"
 VM_DIR_LDR_SERVER="/home/arul/ldr-server/"
+VM_DIR_FF_SERVER="/home/arul/FF-server/"
 NGINX_DIR="/etc/nginx/sites-available/"
 BACKUP_DRIVE="/mnt/my-drive/server-backup"
 DEVICE="/dev/sdb1"  # Device name for the backup drive
 
 # Check if the backup drive is mounted; if not, attempt to mount it
+log_message "Checking if backup drive is mounted..."
 if ! mountpoint -q /mnt/my-drive; then
-    echo "Backup drive is not mounted. Attempting to mount $DEVICE..."
+    log_message "Backup drive is not mounted. Attempting to mount $DEVICE..."
     mount $DEVICE /mnt/my-drive
     if [ $? -ne 0 ]; then
-        echo "Error: Failed to mount the drive. Please check the device path and try again."
+        log_message "Error: Failed to mount the drive. Please check the device path and try again."
         exit 1
     fi
-    echo "Backup drive mounted successfully."
+    log_message "Backup drive mounted successfully."
+else
+    log_message "Backup drive is already mounted."
 fi
 
 # Ensure the main backup directory exists, and create necessary subdirectories if they don't exist
-echo "Setting up backup directory structure..."
-mkdir -p "$BACKUP_DRIVE/my_platforms" "$BACKUP_DRIVE/ldr-server" "$BACKUP_DRIVE/home-server_nginx"
+log_message "Setting up backup directory structure..."
+mkdir -p "$BACKUP_DRIVE/my_platforms" "$BACKUP_DRIVE/ldr-server" "$BACKUP_DRIVE/FF-server" "$BACKUP_DRIVE/home-server_nginx"
 if [ $? -ne 0 ]; then
-    echo "Error: Failed to create backup directories. Please check permissions and try again."
+    log_message "Error: Failed to create backup directories. Please check permissions and try again."
     exit 1
 fi
 
 # Set permissions for the newly created backup directories
 chmod 700 "$BACKUP_DRIVE"
-chmod 755 "$BACKUP_DRIVE/my_platforms" "$BACKUP_DRIVE/ldr-server" "$BACKUP_DRIVE/home-server_nginx"
-echo "Backup directory structure set up with appropriate permissions."
+chmod 755 "$BACKUP_DRIVE/my_platforms" "$BACKUP_DRIVE/ldr-server" "$BACKUP_DRIVE/FF-server" "$BACKUP_DRVE/home-server_nginx"
+log_message "Backup directory structure set up with appropriate permissions."
 
 # Delete previous backups from the backup drive if they exist
-echo "Deleting previous backups..."
-rm -rf "$BACKUP_DRIVE/my_platforms/*" "$BACKUP_DRIVE/ldr-server/*" "$BACKUP_DRIVE/home-server_nginx/*"
-echo "Previous backups deleted."
+log_message "Deleting previous backups..."
+rm -rf "$BACKUP_DRIVE/my_platforms/*" "$BACKUP_DRIVE/ldr-server/*" "$BACKUP_DRIVE/FF-server/*" "$BACKUP_DRIVE/home-server_nginx/*"
+log_message "Previous backups deleted."
 
 # Copy VM files from my_platforms if the source directory exists
 if [ -d "$VM_DIR_MY_PLATFORMS" ]; then
-    echo "Copying VM files from my_platforms..."
+    log_message "Copying VM files from my_platforms..."
     cp -r "$VM_DIR_MY_PLATFORMS"/* "$BACKUP_DRIVE/my_platforms/"
-    echo "Copy of my_platforms completed."
+    log_message "Copy of my_platforms completed."
 else
-    echo "Warning: $VM_DIR_MY_PLATFORMS does not exist. Skipping copy for my_platforms."
+    log_message "Warning: $VM_DIR_MY_PLATFORMS does not exist. Skipping copy for my_platforms."
 fi
 
 # Copy VM files from ldr-server if the source directory exists
 if [ -d "$VM_DIR_LDR_SERVER" ]; then
-    echo "Copying VM files from ldr-server..."
+    log_message "Copying VM files from ldr-server..."
     cp -r "$VM_DIR_LDR_SERVER"/* "$BACKUP_DRIVE/ldr-server/"
-    echo "Copy of ldr-server completed."
+    log_message "Copy of ldr-server completed."
 else
-    echo "Warning: $VM_DIR_LDR_SERVER does not exist. Skipping copy for ldr-server."
+    log_message "Warning: $VM_DIR_LDR_SERVER does not exist. Skipping copy for ldr-server."
+fi
+
+# Copy VM files from FF-server if the source directory exists
+if [ -d "$VM_DIR_FF_SERVER" ]; then
+    log_message "Copying VM files from FF-server..."
+    cp -r "$VM_DIR_FF_SERVER"/* "$BACKUP_DRIVE/FF-server/"
+    log_message "Copy of FF-server completed."
+else
+    log_message "Warning: $VM_DIR_FF_SERVER does not exist. Skipping copy for FF-server."
 fi
 
 # Copy Nginx configuration files
-echo "Copying Nginx configuration files..."
+log_message "Copying Nginx configuration files..."
 cp -r "$NGINX_DIR"/* "$BACKUP_DRIVE/home-server_nginx/"
-echo "Copy of Nginx configuration completed."
+log_message "Copy of Nginx configuration completed."
 
-# Set permissions for Nginx configuration files
-#echo "Setting permissions for Nginx configuration files..."
-#chmod 644 "$BACKUP_DRIVE/home-server_nginx/"*
-#echo "Permissions set for Nginx files."
-
-# Set permissions for VM files if the directories exist
-#if [ -d "$BACKUP_DRIVE/my_platforms" ]; then
-#    echo "Setting permissions for VM files in my_platforms..."
-#    chmod 600 "$BACKUP_DRIVE/my_platforms/"*
-#fi
-
-#if [ -d "$BACKUP_DRIVE/ldr-server" ]; then
-#    echo "Setting permissions for VM files in ldr-server..."
-#    chmod 600 "$BACKUP_DRIVE/ldr-server/"*
-#fi
-
-# Remove executable permissions from copied files
-#echo "Removing executable permissions from copied files..."
-#chmod -x "$BACKUP_DRIVE/my_platforms/"* "$BACKUP_DRIVE/ldr-server/"* "$BACKUP_DRIVE/home-server_nginx/"*
-#echo "Executable permissions removed."
-
-echo "Latest version of Server VM Backup completed successfully!"
+# Final message
+log_message "Latest version of Server VM Backup completed successfully!"
 figlet "Done"
 
-echo "Unmounting the External backup drive"
-umount -l /mnt/my-drive
+# Unmount the external backup drive using the unmount-ssd script
+log_message "Unmounting the external backup drive..."
+./unmount-ssd
 
-# Reboot the system after the copy operation
-echo "Rebooting the system..."
-reboot
+# Run disable-usb script to disable USB
+log_message "Running disable-usb script..."
+./disable-usb
 
+#systemd service to initiate all servers with time intervals for smooth initiation
+log_message "Restarting all server VMs..."
+sudo systemctl restart start_vms.service
 

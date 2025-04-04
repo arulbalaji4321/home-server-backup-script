@@ -1,0 +1,22 @@
+#!/bin/bash
+
+USB_DEV="3-2"
+MOUNT_POINT="/mnt/my-drive"
+
+# Check if SSD is mounted before unmounting
+if mountpoint -q "$MOUNT_POINT"; then
+    sync
+    umount "$MOUNT_POINT"
+    echo "✅ Unmounted $MOUNT_POINT"
+else
+    echo "⚠ No drive mounted at $MOUNT_POINT"
+fi
+
+# Check if USB device exists before trying to disable it
+if [[ -e /sys/bus/usb/devices/$USB_DEV ]]; then
+    echo 1 | sudo tee /sys/bus/usb/devices/$USB_DEV/remove
+    echo "✅ USB device $USB_DEV disabled"
+else
+    echo "⚠ USB device $USB_DEV is already removed"
+fi
+
