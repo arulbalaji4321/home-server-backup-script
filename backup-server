@@ -48,26 +48,26 @@ fi
 
 # Ensure the main backup directory exists, and create necessary subdirectories if they don't exist
 log_message "Setting up backup directory structure..."
-mkdir -p "$BACKUP_DRIVE/my_platforms" "$BACKUP_DRIVE/ldr-server" "$BACKUP_DRIVE/FF-server" "$BACKUP_DRIVE/home-server_nginx"
+sudo mkdir -p "$BACKUP_DRIVE/my_platforms" "$BACKUP_DRIVE/ldr-server" "$BACKUP_DRIVE/FF-server" "$BACKUP_DRIVE/home-server_nginx"
 if [ $? -ne 0 ]; then
     log_message "Error: Failed to create backup directories. Please check permissions and try again."
     exit 1
 fi
 
 # Set permissions for the newly created backup directories
-chmod 700 "$BACKUP_DRIVE"
-chmod 755 "$BACKUP_DRIVE/my_platforms" "$BACKUP_DRIVE/ldr-server" "$BACKUP_DRIVE/FF-server" "$BACKUP_DRVE/home-server_nginx"
+sudo chmod 700 "$BACKUP_DRIVE"
+sudo chmod 755 "$BACKUP_DRIVE/my_platforms" "$BACKUP_DRIVE/ldr-server" "$BACKUP_DRIVE/FF-server" "$BACKUP_DRVE/home-server_nginx"
 log_message "Backup directory structure set up with appropriate permissions."
 
 # Delete previous backups from the backup drive if they exist
 log_message "Deleting previous backups..."
-rm -rf "$BACKUP_DRIVE/my_platforms/*" "$BACKUP_DRIVE/ldr-server/*" "$BACKUP_DRIVE/FF-server/*" "$BACKUP_DRIVE/home-server_nginx/*"
+sudo rm -rf "$BACKUP_DRIVE/my_platforms/*" "$BACKUP_DRIVE/ldr-server/*" "$BACKUP_DRIVE/FF-server/*" "$BACKUP_DRIVE/home-server_nginx/*"
 log_message "Previous backups deleted."
 
 # Copy VM files from my_platforms if the source directory exists
 if [ -d "$VM_DIR_MY_PLATFORMS" ]; then
     log_message "Copying VM files from my_platforms..."
-    cp -r "$VM_DIR_MY_PLATFORMS"/* "$BACKUP_DRIVE/my_platforms/"
+    sudo cp -r "$VM_DIR_MY_PLATFORMS"/* "$BACKUP_DRIVE/my_platforms/"
     log_message "Copy of my_platforms completed."
 else
     log_message "Warning: $VM_DIR_MY_PLATFORMS does not exist. Skipping copy for my_platforms."
@@ -76,7 +76,7 @@ fi
 # Copy VM files from ldr-server if the source directory exists
 if [ -d "$VM_DIR_LDR_SERVER" ]; then
     log_message "Copying VM files from ldr-server..."
-    cp -r "$VM_DIR_LDR_SERVER"/* "$BACKUP_DRIVE/ldr-server/"
+    sudo cp -r "$VM_DIR_LDR_SERVER"/* "$BACKUP_DRIVE/ldr-server/"
     log_message "Copy of ldr-server completed."
 else
     log_message "Warning: $VM_DIR_LDR_SERVER does not exist. Skipping copy for ldr-server."
@@ -85,7 +85,7 @@ fi
 # Copy VM files from FF-server if the source directory exists
 if [ -d "$VM_DIR_FF_SERVER" ]; then
     log_message "Copying VM files from FF-server..."
-    cp -r "$VM_DIR_FF_SERVER"/* "$BACKUP_DRIVE/FF-server/"
+    sudo cp -r "$VM_DIR_FF_SERVER"/* "$BACKUP_DRIVE/FF-server/"
     log_message "Copy of FF-server completed."
 else
     log_message "Warning: $VM_DIR_FF_SERVER does not exist. Skipping copy for FF-server."
@@ -93,7 +93,7 @@ fi
 
 # Copy Nginx configuration files
 log_message "Copying Nginx configuration files..."
-cp -r "$NGINX_DIR"/* "$BACKUP_DRIVE/home-server_nginx/"
+sudo cp -r "$NGINX_DIR"/* "$BACKUP_DRIVE/home-server_nginx/"
 log_message "Copy of Nginx configuration completed."
 
 # Final message
